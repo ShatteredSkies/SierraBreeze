@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>428</width>
-    <height>418</height>
+    <width>431</width>
+    <height>562</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -33,16 +33,10 @@
        <string>General</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_4">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_3">
+       <item row="6" column="0" colspan="2">
+        <widget class="QCheckBox" name="matchColorForTitleBar">
          <property name="text">
-          <string>T&amp;itle alignment:</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="buddy">
-          <cstring>titleAlignment</cstring>
+          <string>Match Title Bar's and Window's color</string>
          </property>
         </widget>
        </item>
@@ -56,16 +50,44 @@
          </property>
         </widget>
        </item>
-       <item row="9" column="1">
-        <widget class="QSpinBox" name="buttonSize">
-         <property name="enabled">
-          <bool>true</bool>
+       <item row="5" column="0" colspan="3">
+        <widget class="QCheckBox" name="drawSizeGrip">
+         <property name="text">
+          <string>Add handle to resize windows with no border</string>
          </property>
-         <property name="suffix">
-          <string> px</string>
+        </widget>
+       </item>
+       <item row="7" column="0" colspan="3">
+        <widget class="QCheckBox" name="drawTitleBarSeparator">
+         <property name="text">
+          <string>Draw separator between Title Bar and Window</string>
          </property>
-         <property name="maximum">
-          <number>15</number>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>T&amp;itle alignment:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="buddy">
+          <cstring>titleAlignment</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0" colspan="3">
+        <widget class="QCheckBox" name="drawBorderOnMaximizedWindows">
+         <property name="text">
+          <string>Display window borders for maximized windows</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0" colspan="3">
+        <widget class="QCheckBox" name="drawBackgroundGradient">
+         <property name="text">
+          <string>Draw window background gradient</string>
          </property>
         </widget>
        </item>
@@ -73,6 +95,49 @@
         <widget class="QLabel" name="buttonSpacingLabel">
          <property name="text">
           <string>B&amp;utton spacing:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="buddy">
+          <cstring>buttonSpacing</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0" colspan="3">
+        <widget class="QCheckBox" name="outlineCloseButton">
+         <property name="text">
+          <string>Draw a circle around close button</string>
+         </property>
+        </widget>
+       </item>
+       <item row="12" column="1">
+        <widget class="QSpinBox" name="opacitySpinBox">
+         <property name="suffix">
+          <string> %</string>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="1">
+        <widget class="QSpinBox" name="buttonHPadding">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="suffix">
+          <string> px</string>
+         </property>
+         <property name="maximum">
+          <number>50</number>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="0">
+        <widget class="QLabel" name="buttonHPaddingLabel">
+         <property name="text">
+          <string>Button hori&amp;zontal padding:</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -91,33 +156,7 @@
           <string> px</string>
          </property>
          <property name="maximum">
-          <number>15</number>
-         </property>
-        </widget>
-       </item>
-       <item row="11" column="0">
-        <widget class="QLabel" name="buttonHPaddingLabel">
-         <property name="text">
-          <string>Button hori&amp;zontal padding:</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="buddy">
-          <cstring>buttonSpacing</cstring>
-         </property>
-        </widget>
-       </item>
-       <item row="11" column="1">
-        <widget class="QSpinBox" name="buttonHPadding">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="suffix">
-          <string> px</string>
-         </property>
-         <property name="maximum">
-          <number>50</number>
+          <number>30</number>
          </property>
         </widget>
        </item>
@@ -158,45 +197,36 @@
          </property>
         </spacer>
        </item>
-       <item row="5" column="0" colspan="3">
-        <widget class="QCheckBox" name="drawSizeGrip">
-         <property name="text">
-          <string>Add handle to resize windows with no border</string>
+       <item row="9" column="1">
+        <widget class="QSpinBox" name="buttonSize">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="suffix">
+          <string> px</string>
+         </property>
+         <property name="maximum">
+          <number>30</number>
          </property>
         </widget>
        </item>
-       <item row="7" column="0" colspan="3">
-        <widget class="QCheckBox" name="drawTitleBarSeparator">
+       <item row="12" column="0">
+        <widget class="QLabel" name="titlebarOpacityLabel">
          <property name="text">
-          <string>Draw separator between Title Bar and Window</string>
+          <string>Background opacity:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="buddy">
+          <cstring>buttonSpacing</cstring>
          </property>
         </widget>
        </item>
-       <item row="3" column="0" colspan="3">
-        <widget class="QCheckBox" name="drawBorderOnMaximizedWindows">
+       <item row="8" column="0">
+        <widget class="QCheckBox" name="opaqueTitleBar">
          <property name="text">
-          <string>Display window borders for maximized windows</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0" colspan="3">
-        <widget class="QCheckBox" name="outlineCloseButton">
-         <property name="text">
-          <string>Draw a circle around close button</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0" colspan="3">
-        <widget class="QCheckBox" name="drawBackgroundGradient">
-         <property name="text">
-          <string>Draw window background gradient</string>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="0" colspan="2">
-        <widget class="QCheckBox" name="matchColorForTitleBar">
-         <property name="text">
-          <string>Match Title Bar's and Window's color</string>
+          <string>Opaque title bar</string>
          </property>
         </widget>
        </item>
@@ -612,6 +642,38 @@
     <hint type="destinationlabel">
      <x>141</x>
      <y>229</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>opaqueTitleBar</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>opacitySpinBox</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>opaqueTitleBar</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_6</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
     </hint>
    </hints>
   </connection>

@@ -152,6 +152,19 @@
         <default>true</default>
     </entry>
 
+    <!-- opaque title bar -->
+    <entry name="OpaqueTitleBar" type = "Bool">
+      <default>true</default>
+    </entry>
+
+    <entry name="BackgroundOpacity" type = "Int">
+      <default>100</default>
+    </entry>
+
+    <entry name="OpacityOverride" type = "Int">
+      <default>-1</default>
+    </entry>
+
     <!-- size grip -->
     <entry name="DrawBackgroundGradient" type = "Bool">
         <default>true</default>

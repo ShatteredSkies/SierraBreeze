@@ -113,6 +113,7 @@ namespace SierraBreeze
         void updateTitleBar();
         void updateAnimationState();
         void updateSizeGripVisibility();
+        void updateBlur();
 
         private:
 
@@ -123,12 +124,19 @@ namespace SierraBreeze
         void paintTitleBar(QPainter *painter, const QRect &repaintRegion);
         void createShadow();
 
+        void setScaledCornerRadius();
+
         //*@name border size
         //@{
         int borderSize(bool bottom = false) const;
         inline bool hasBorders( void ) const;
         inline bool hasNoBorders( void ) const;
         inline bool hasNoSideBorders( void ) const;
+        //@}
+
+        //*@name color customization
+        //@{
+        inline int titleBarAlpha() const;
         //@}
 
         //*@name size grip
@@ -152,6 +160,9 @@ namespace SierraBreeze
 
         //* active state change opacity
         qreal m_opacity = 0;
+
+        //*frame corner radius, scaled according to DPI
+        qreal m_scaledCornerRadius = 3;
 
         //TODO Review this
         QPainter painter;
@@ -203,6 +214,15 @@ namespace SierraBreeze
 
     bool Decoration::matchColorForTitleBar( void ) const
     { return m_internalSettings->matchColorForTitleBar(); }
+
+    int Decoration::titleBarAlpha() const
+    {
+        if (m_internalSettings->opaqueTitleBar())
+            return 255;
+        int a = m_internalSettings->opacityOverride() > -1 ? m_internalSettings->opacityOverride() : m_internalSettings->backgroundOpacity();
+        a =  qBound(0, a, 100);
+        return qRound(static_cast<qreal>(a) * static_cast<qreal>(2.55));
+    }
 }
 
 #endif

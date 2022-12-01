@@ -51,7 +51,9 @@ namespace SierraBreeze
         connect( m_ui.outlineCloseButton, SIGNAL(clicked()), SLOT(updateChanged()) );
         connect( m_ui.drawBorderOnMaximizedWindows, SIGNAL(clicked()), SLOT(updateChanged()) );
         connect( m_ui.drawSizeGrip, SIGNAL(clicked()), SLOT(updateChanged()) );
+        connect( m_ui.opaqueTitleBar, &QAbstractButton::clicked, this, &ConfigWidget::updateChanged );
         connect( m_ui.drawBackgroundGradient, SIGNAL(clicked()), SLOT(updateChanged()) );
+        connect( m_ui.opacitySpinBox, QOverload<int>::of(&QSpinBox::valueChanged), [=](int /*i*/){updateChanged();} );
         connect( m_ui.drawTitleBarSeparator, SIGNAL(clicked()), SLOT(updateChanged()) );
         connect( m_ui.matchColorForTitleBar, SIGNAL(clicked()), SLOT(updateChanged()) );
 
@@ -102,9 +104,11 @@ namespace SierraBreeze
         m_ui.drawBorderOnMaximizedWindows->setChecked( m_internalSettings->drawBorderOnMaximizedWindows() );
         m_ui.outlineCloseButton->setChecked( m_internalSettings->outlineCloseButton() );
         m_ui.drawSizeGrip->setChecked( m_internalSettings->drawSizeGrip() );
+        m_ui.opaqueTitleBar->setChecked( m_internalSettings->opaqueTitleBar() );
         m_ui.drawBackgroundGradient->setChecked( m_internalSettings->drawBackgroundGradient() );
         m_ui.animationsEnabled->setChecked( m_internalSettings->animationsEnabled() );
         m_ui.animationsDuration->setValue( m_internalSettings->animationsDuration() );
+        m_ui.opacitySpinBox->setValue( m_internalSettings->backgroundOpacity() );
         m_ui.drawTitleBarSeparator->setChecked( m_internalSettings->drawTitleBarSeparator() );
         m_ui.buttonSize->setValue( m_internalSettings->buttonSize() );
         m_ui.buttonSpacing->setValue( m_internalSettings->buttonSpacing() );
@@ -153,9 +157,11 @@ namespace SierraBreeze
         m_internalSettings->setOutlineCloseButton( m_ui.outlineCloseButton->isChecked() );
         m_internalSettings->setDrawBorderOnMaximizedWindows( m_ui.drawBorderOnMaximizedWindows->isChecked() );
         m_internalSettings->setDrawSizeGrip( m_ui.drawSizeGrip->isChecked() );
+        m_internalSettings->setOpaqueTitleBar( m_ui.opaqueTitleBar->isChecked() );
         m_internalSettings->setDrawBackgroundGradient( m_ui.drawBackgroundGradient->isChecked() );
         m_internalSettings->setAnimationsEnabled( m_ui.animationsEnabled->isChecked() );
         m_internalSettings->setAnimationsDuration( m_ui.animationsDuration->value() );
+        m_internalSettings->setBackgroundOpacity(m_ui.opacitySpinBox->value());
         m_internalSettings->setDrawTitleBarSeparator(m_ui.drawTitleBarSeparator->isChecked());
         m_internalSettings->setMatchColorForTitleBar( m_ui.matchColorForTitleBar->isChecked() );
 
@@ -220,9 +226,11 @@ namespace SierraBreeze
         // m_ui.buttonSize->setCurrentIndex( m_internalSettings->buttonSize() );
         m_ui.drawBorderOnMaximizedWindows->setChecked( m_internalSettings->drawBorderOnMaximizedWindows() );
         m_ui.drawSizeGrip->setChecked( m_internalSettings->drawSizeGrip() );
+        m_ui.opaqueTitleBar->setChecked( m_internalSettings->opaqueTitleBar() );
         m_ui.drawBackgroundGradient->setChecked( m_internalSettings->drawBackgroundGradient() );
         m_ui.animationsEnabled->setChecked( m_internalSettings->animationsEnabled() );
         m_ui.animationsDuration->setValue( m_internalSettings->animationsDuration() );
+        m_ui.opacitySpinBox->setValue( m_internalSettings->backgroundOpacity() );
         m_ui.drawTitleBarSeparator->setChecked( m_internalSettings->drawTitleBarSeparator() );
 
         m_ui.buttonSize->setValue( m_internalSettings->buttonSize() );
@@ -267,6 +275,7 @@ namespace SierraBreeze
         else if( m_ui.outlineCloseButton->isChecked() != m_internalSettings->outlineCloseButton() ) modified = true;
         else if( m_ui.drawBorderOnMaximizedWindows->isChecked() !=  m_internalSettings->drawBorderOnMaximizedWindows() ) modified = true;
         else if( m_ui.drawSizeGrip->isChecked() !=  m_internalSettings->drawSizeGrip() ) modified = true;
+        else if( m_ui.opaqueTitleBar->isChecked() !=  m_internalSettings->opaqueTitleBar() ) modified = true;
         else if( m_ui.drawBackgroundGradient->isChecked() !=  m_internalSettings->drawBackgroundGradient() ) modified = true;
         else if( m_ui.buttonSize->value() != m_internalSettings->buttonSize() ) modified = true;
         else if( m_ui.buttonSpacing->value() != m_internalSettings->buttonSpacing() ) modified = true;
@@ -285,6 +294,7 @@ namespace SierraBreeze
         else if( m_ui.buttonKeepBelowInactiveColor->color() != m_internalSettings->buttonKeepBelowInactiveColor() ) modified = true;
         else if( m_ui.buttonKeepAboveActiveColor->color() != m_internalSettings->buttonKeepAboveActiveColor() ) modified = true;
         else if( m_ui.buttonKeepAboveInactiveColor->color() != m_internalSettings->buttonKeepAboveInactiveColor() ) modified = true;
+        else if( m_ui.opacitySpinBox->value() != m_internalSettings->backgroundOpacity() ) modified = true;
 
         // animations
         else if( m_ui.animationsEnabled->isChecked() !=  m_internalSettings->animationsEnabled() ) modified = true;

@@ -196,12 +196,18 @@ namespace SierraBreeze
         connect(c, &KDecoration2::DecoratedClient::activeChanged, this, &Decoration::updateAnimationState);
         connect(c, &KDecoration2::DecoratedClient::widthChanged, this, &Decoration::updateTitleBar);
         connect(c, &KDecoration2::DecoratedClient::maximizedChanged, this, &Decoration::updateTitleBar);
-        connect(c, &KDecoration2::DecoratedClient::maximizedChanged, this, &Decoration::setOpaque);
+        //connect(c, &KDecoration2::DecoratedClient::maximizedChanged, this, &Decoration::setOpaque);
 
         connect(c, &KDecoration2::DecoratedClient::widthChanged, this, &Decoration::updateButtonsGeometry);
         connect(c, &KDecoration2::DecoratedClient::maximizedChanged, this, &Decoration::updateButtonsGeometry);
         connect(c, &KDecoration2::DecoratedClient::adjacentScreenEdgesChanged, this, &Decoration::updateButtonsGeometry);
         connect(c, &KDecoration2::DecoratedClient::shadedChanged, this, &Decoration::updateButtonsGeometry);
+
+        connect(s.data(), &KDecoration2::DecorationSettings::borderSizeChanged, this, &Decoration::updateBlur);
+        connect(s.data(), &KDecoration2::DecorationSettings::fontChanged, this, &Decoration::updateBlur);
+        connect(s.data(), &KDecoration2::DecorationSettings::spacingChanged, this, &Decoration::updateBlur);
+        connect(c, &KDecoration2::DecoratedClient::activeChanged, this, &Decoration::updateBlur);
+        connect(c, &KDecoration2::DecoratedClient::sizeChanged, this, &Decoration::updateBlur);
 
         createButtons();
         createShadow();
@@ -289,11 +295,16 @@ namespace SierraBreeze
 
         m_internalSettings = SettingsProvider::self()->internalSettings( this );
 
+        setScaledCornerRadius();
+
         // animation
         m_animation->setDuration( m_internalSettings->animationsDuration() );
 
         // borders
         recalculateBorders();
+
+        // blur
+        updateBlur();
 
         // shadow
         createShadow();
@@ -349,6 +360,135 @@ namespace SierraBreeze
         }
 
         setResizeOnlyBorders(QMargins(extSides, 0, extSides, extBottom));
+    }
+
+    //________________________________________________________________
+    void Decoration::updateBlur()
+    {
+        // NOTE: "BlurEffect::decorationBlurRegion()" will consider the intersection of
+        // the blur and decoration regions. Here we need to focus on corner rounding.
+
+        if (titleBarAlpha() == 255 || !settings()->isAlphaChannelSupported())
+        { // no blurring without translucency
+            setBlurRegion(QRegion());
+            return;
+        }
+
+        QRegion region;
+        const auto c = client().toStrongRef();
+        QSize rSize(m_scaledCornerRadius, m_scaledCornerRadius);
+
+        if (!c->isShaded() && !isMaximized() && !hasNoBorders())
+        {
+            // exclude the titlebar
+            int topBorder = hideTitleBar() ? 0 : borderTop();
+            QRect rect(0, topBorder, size().width(), size().height() - topBorder);
+
+            QRegion vert(QRect(rect.topLeft() + QPoint(m_scaledCornerRadius, 0),
+                               QSize(rect.width() - 2*m_scaledCornerRadius, rect.height())));
+            QRegion topLeft, topRight, bottomLeft, bottomRight, horiz;
+            if (hasBorders())
+            {
+                if (hideTitleBar())
+                {
+                    topLeft = QRegion(QRect(rect.topLeft(), 2*rSize),
+                                      isLeftEdge() ? QRegion::Rectangle : QRegion::Ellipse);
+                    topRight = QRegion(QRect(rect.topLeft() + QPoint(rect.width() - 2*m_scaledCornerRadius, 0),
+                                             2*rSize),
+                                       isRightEdge() ? QRegion::Rectangle : QRegion::Ellipse);
+                    horiz = QRegion(QRect(rect.topLeft() + QPoint(0, m_scaledCornerRadius),
+                                          QSize(rect.width(), rect.height() - 2*m_scaledCornerRadius)));
+                }
+                else
+                { // "horiz" is at the top because the titlebar is excluded
+                    horiz = QRegion(QRect(rect.topLeft(),
+                                    QSize(rect.width(), rect.height() - m_scaledCornerRadius)));
+                }
+                bottomLeft = QRegion(QRect(rect.topLeft() + QPoint(0, rect.height() - 2*m_scaledCornerRadius),
+                                           2*rSize),
+                                     isLeftEdge() && isBottomEdge() ? QRegion::Rectangle : QRegion::Ellipse);
+                bottomRight = QRegion(QRect(rect.topLeft() + QPoint(rect.width() - 2*m_scaledCornerRadius,
+                                                                    rect.height() - 2*m_scaledCornerRadius),
+                                            2*rSize),
+                                      isRightEdge() && isBottomEdge() ? QRegion::Rectangle : QRegion::Ellipse);
+            }
+            else // no side border
+            {
+                horiz = QRegion(QRect(rect.topLeft(),
+                                      QSize(rect.width(), rect.height() - m_scaledCornerRadius)));
+                bottomLeft = QRegion(QRect(rect.topLeft() + QPoint(0, rect.height() - 2*m_scaledCornerRadius),
+                                           2*rSize),
+                                     isBottomEdge() ? QRegion::Rectangle : QRegion::Ellipse);
+                bottomRight = QRegion(QRect(rect.topLeft() + QPoint(rect.width() - 2*m_scaledCornerRadius,
+                                                                    rect.height() - 2*m_scaledCornerRadius),
+                                            2*rSize),
+                                      isBottomEdge() ? QRegion::Rectangle : QRegion::Ellipse);
+            }
+
+            region = topLeft
+                     .united(topRight)
+                     .united(bottomLeft)
+                     .united(bottomRight)
+                     .united(horiz)
+                     .united(vert);
+
+            if (hideTitleBar())
+            {
+                setBlurRegion(region);
+                return;
+            }
+        }
+
+        const QRect titleRect(QPoint(0, 0), QSize(size().width(), borderTop()));
+
+        // add the titlebar
+        if (m_scaledCornerRadius == 0
+            || isMaximized()) // maximized + no border when maximized
+        {
+            region |= QRegion(titleRect);
+        }
+        else if (c->isShaded())
+        {
+            QRegion topLeft(QRect(titleRect.topLeft(), 2*rSize), QRegion::Ellipse);
+            QRegion topRight(QRect(titleRect.topLeft() + QPoint(titleRect.width() - 2*m_scaledCornerRadius, 0),
+                                   2*rSize),
+                             QRegion::Ellipse);
+            QRegion bottomLeft(QRect(titleRect.topLeft() + QPoint(0, titleRect.height() - 2*m_scaledCornerRadius),
+                                     2*rSize),
+                               QRegion::Ellipse);
+            QRegion bottomRight(QRect(titleRect.topLeft() + QPoint(titleRect.width() - 2*m_scaledCornerRadius,
+                                                                   titleRect.height() - 2*m_scaledCornerRadius),
+                                      2*rSize),
+                                QRegion::Ellipse);
+            region = topLeft
+                     .united(topRight)
+                     .united(bottomLeft)
+                     .united(bottomRight)
+                     // vertical
+                     .united(QRect(titleRect.topLeft() + QPoint(m_scaledCornerRadius, 0),
+                                   QSize(titleRect.width() - 2*m_scaledCornerRadius, titleRect.height())))
+                     // horizontal
+                     .united(QRect(titleRect.topLeft() + QPoint(0, m_scaledCornerRadius),
+                                   QSize(titleRect.width(), titleRect.height() - 2*m_scaledCornerRadius)));
+        }
+        else
+        {
+            QRegion topLeft(QRect(titleRect.topLeft(), 2*rSize),
+                            isLeftEdge() || isTopEdge() ? QRegion::Rectangle : QRegion::Ellipse);
+            QRegion topRight(QRect(titleRect.topLeft() + QPoint(titleRect.width() - 2*m_scaledCornerRadius, 0),
+                                   2*rSize),
+                             isRightEdge() || isTopEdge() ? QRegion::Rectangle : QRegion::Ellipse);
+            region |= topLeft
+                      .united(topRight)
+                      // vertical
+                      .united(QRect(titleRect.topLeft() + QPoint(m_scaledCornerRadius, 0),
+                                    QSize(titleRect.width() - 2*m_scaledCornerRadius, titleRect.height())))
+                      // horizontal
+                      .united(QRect(titleRect.topLeft() + QPoint(0, m_scaledCornerRadius),
+                                    QSize(titleRect.width(), titleRect.height() - m_scaledCornerRadius)));
+        }
+
+        setBlurRegion(region);
     }
 
     //________________________________________________________________
@@ -451,7 +591,9 @@ void Decoration::createButtons()
             painter->setRenderHint(QPainter::Antialiasing);
             painter->setPen(Qt::NoPen);
 
-            painter->setBrush( c->color( c->isActive() ? ColorGroup::Active : ColorGroup::Inactive, ColorRole::Frame ) );
+            QColor winCol = this->titleBarColor();
+            winCol.setAlpha(titleBarAlpha());
+            painter->setBrush(winCol);
 
             // clip away the top part
             if( !hideTitleBar() ) painter->setClipRect(0, borderTop(), size().width(), size().height() - borderTop(), Qt::IntersectClip);
@@ -497,7 +639,9 @@ void Decoration::createButtons()
         {
 
             // TODO Review this. Initialize titleBarColor based on user's choise.
-            const QColor titleBarColor = (matchColorForTitleBar()  ? matchedTitleBarColor : this->titleBarColor() );
+            QColor titleBarColor(matchColorForTitleBar()  ? matchedTitleBarColor : this->titleBarColor() );
+            titleBarColor.setAlpha(titleBarAlpha());
+
             QLinearGradient gradient( 0, 0, 0, titleRect.height() );
             gradient.setColorAt(0.0, titleBarColor.lighter( 120 ) );
             gradient.setColorAt(0.8, titleBarColor);
@@ -507,7 +651,9 @@ void Decoration::createButtons()
 
             // TODO Review this. Initialize titleBarColor based on user's choise.
             // I needed another else if because the window might not be active or has drawBackgroundGradient but
-            const QColor titleBarColor = (matchColorForTitleBar()  ? matchedTitleBarColor : this->titleBarColor() );
+            QColor titleBarColor(matchColorForTitleBar()  ? matchedTitleBarColor : this->titleBarColor() );
+            titleBarColor.setAlpha(titleBarAlpha());
+
             painter->setBrush(titleBarColor);
 
         }
@@ -750,8 +896,13 @@ void Decoration::createButtons()
         }
     }
 
+    void Decoration::setScaledCornerRadius()
+    {
+        m_scaledCornerRadius = Metrics::Frame_FrameRadius*settings()->smallSpacing();
+
+    }
+
 } // namespace
 
 
-// #include "breezedecoration.moc"
 #include "breezedecoration.moc"
