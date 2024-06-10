@@ -36,14 +36,14 @@ namespace SierraBreeze
 {
 
     //_________________________________________________________
-    ConfigWidget::ConfigWidget( QWidget* parent, const QVariantList &args ):
-        KCModule(parent, args),
-        m_configuration( KSharedConfig::openConfig( QStringLiteral( "breezerc" ) ) ),
+    ConfigWidget::ConfigWidget( QObject* parent, const KPluginMetaData &data, const QVariantList &):
+        KCModule(parent, data),
+        m_configuration( KSharedConfig::openConfig( QStringLiteral( "sierrabreezerc" ) ) ),
         m_changed( false )
     {
 
         // configuration
-        m_ui.setupUi( this );
+        m_ui.setupUi(widget());
 
         // track ui changes
         connect( m_ui.titleAlignment, SIGNAL(currentIndexChanged(int)), SLOT(updateChanged()) );
@@ -56,6 +56,7 @@ namespace SierraBreeze
         connect( m_ui.opacitySpinBox, QOverload<int>::of(&QSpinBox::valueChanged), [=](int /*i*/){updateChanged();} );
         connect( m_ui.drawTitleBarSeparator, SIGNAL(clicked()), SLOT(updateChanged()) );
         connect( m_ui.matchColorForTitleBar, SIGNAL(clicked()), SLOT(updateChanged()) );
+        connect(m_ui.cornerRadius, SIGNAL(valueChanged(double)), SLOT(updateChanged()));
 
         connect( m_ui.buttonSize, SIGNAL(valueChanged(int)), SLOT(updateChanged()) );
         connect( m_ui.buttonSpacing, SIGNAL(valueChanged(int)), SLOT(updateChanged()) );
@@ -114,6 +115,7 @@ namespace SierraBreeze
         m_ui.buttonSpacing->setValue( m_internalSettings->buttonSpacing() );
         m_ui.buttonHPadding->setValue( m_internalSettings->buttonHPadding() );
         m_ui.matchColorForTitleBar->setChecked( m_internalSettings->matchColorForTitleBar() );
+        m_ui.cornerRadius->setValue(m_internalSettings->cornerRadius());
 
         m_ui.buttonCloseActiveColor->setColor( m_internalSettings->buttonCloseActiveColor() );
         m_ui.buttonCloseInactiveColor->setColor( m_internalSettings->buttonCloseInactiveColor() );
@@ -164,6 +166,7 @@ namespace SierraBreeze
         m_internalSettings->setBackgroundOpacity(m_ui.opacitySpinBox->value());
         m_internalSettings->setDrawTitleBarSeparator(m_ui.drawTitleBarSeparator->isChecked());
         m_internalSettings->setMatchColorForTitleBar( m_ui.matchColorForTitleBar->isChecked() );
+        m_internalSettings->setCornerRadius(m_ui.cornerRadius->value());
 
         m_internalSettings->setButtonSize( m_ui.buttonSize->value() );
         m_internalSettings->setButtonSpacing( m_ui.buttonSpacing->value() );
@@ -232,6 +235,7 @@ namespace SierraBreeze
         m_ui.animationsDuration->setValue( m_internalSettings->animationsDuration() );
         m_ui.opacitySpinBox->setValue( m_internalSettings->backgroundOpacity() );
         m_ui.drawTitleBarSeparator->setChecked( m_internalSettings->drawTitleBarSeparator() );
+        m_ui.cornerRadius->setValue(m_internalSettings->cornerRadius());
 
         m_ui.buttonSize->setValue( m_internalSettings->buttonSize() );
         m_ui.buttonSpacing->setValue( m_internalSettings->buttonSpacing() );
@@ -277,6 +281,7 @@ namespace SierraBreeze
         else if( m_ui.drawSizeGrip->isChecked() !=  m_internalSettings->drawSizeGrip() ) modified = true;
         else if( m_ui.opaqueTitleBar->isChecked() !=  m_internalSettings->opaqueTitleBar() ) modified = true;
         else if( m_ui.drawBackgroundGradient->isChecked() !=  m_internalSettings->drawBackgroundGradient() ) modified = true;
+        else if (m_ui.cornerRadius->value() != m_internalSettings->cornerRadius()) modified = true;
         else if( m_ui.buttonSize->value() != m_internalSettings->buttonSize() ) modified = true;
         else if( m_ui.buttonSpacing->value() != m_internalSettings->buttonSpacing() ) modified = true;
         else if( m_ui.buttonHPadding->value() != m_internalSettings->buttonHPadding() ) modified = true;
@@ -318,7 +323,7 @@ namespace SierraBreeze
     //_______________________________________________
     void ConfigWidget::setChanged( bool value )
     {
-        emit changed( value );
+        setNeedsSave( value );
     }
 
 }

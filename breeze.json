@@ -61,9 +61,8 @@
             "org.kde.kdecoration2"
         ]
     },
+    "X-KDE-ConfigModule": "kcm_sierrabreezedecoration",
     "org.kde.kdecoration2": {
-        "blur": true,
-        "defaultTheme": "Breeze Sierra",
-        "kcmodule": true
+        "blur": true
     }
 }

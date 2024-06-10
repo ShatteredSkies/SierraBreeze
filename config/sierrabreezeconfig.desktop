@@ -1,3 +1,4 @@
+#!/usr/bin/env xdg-open
 [Desktop Entry]
 # Exec=kcmshell5 breezedecorationconfig
 Exec=kcmshell5 sierrabreezeconfig

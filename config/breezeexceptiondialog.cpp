@@ -25,11 +25,6 @@
 
 #include "breezeexceptiondialog.h"
 #include "breezedetectwidget.h"
-#include "config-breeze.h"
-
-#if BREEZE_HAVE_X11
-#include <QX11Info>
-#endif
 
 namespace SierraBreeze
 {
@@ -41,30 +36,23 @@ namespace SierraBreeze
 
         m_ui.setupUi( this );
 
-        connect( m_ui.buttonBox->button( QDialogButtonBox::Cancel ), SIGNAL(clicked()), this, SLOT(close()) );
+        connect(m_ui.buttonBox->button(QDialogButtonBox::Cancel), &QAbstractButton::clicked, this, &QWidget::close);
 
         // store checkboxes from ui into list
         m_checkboxes.insert( BorderSize, m_ui.borderSizeCheckBox );
 
         // detect window properties
-        connect( m_ui.detectDialogButton, SIGNAL(clicked()), SLOT(selectWindowProperties()) );
+        connect(m_ui.detectDialogButton, &QAbstractButton::clicked, this, &ExceptionDialog::selectWindowProperties);
 
         // connections
         connect( m_ui.exceptionType, SIGNAL(currentIndexChanged(int)), SLOT(updateChanged()) );
-        connect( m_ui.exceptionEditor, SIGNAL(textChanged(QString)), SLOT(updateChanged()) );
+        connect( m_ui.exceptionEditor, &QLineEdit::textChanged, this, &ExceptionDialog::updateChanged);
         connect( m_ui.borderSizeComboBox, SIGNAL(currentIndexChanged(int)), SLOT(updateChanged()) );
 
         for( CheckBoxMap::iterator iter = m_checkboxes.begin(); iter != m_checkboxes.end(); ++iter )
-        { connect( iter.value(), SIGNAL(clicked()), SLOT(updateChanged()) ); }
+        { connect(iter.value(), &QAbstractButton::clicked, this, &ExceptionDialog::updateChanged); }
 
-        connect( m_ui.hideTitleBar, SIGNAL(clicked()), SLOT(updateChanged()) );
-
-        // hide detection dialog on non X11 platforms
-        #if BREEZE_HAVE_X11
-        if( !QX11Info::isPlatformX11() ) m_ui.detectDialogButton->hide();
-        #else
-        m_ui.detectDialogButton->hide();
-        #endif
+        connect(m_ui.hideTitleBar, &QAbstractButton::clicked, this, &ExceptionDialog::updateChanged);
     }
 
     //___________________________________________
@@ -133,17 +121,17 @@ namespace SierraBreeze
     }
 
     //___________________________________________
-    void ExceptionDialog::selectWindowProperties( void )
+    void ExceptionDialog::selectWindowProperties()
     {
 
         // create widget
         if( !m_detectDialog )
         {
             m_detectDialog = new DetectDialog( this );
-            connect( m_detectDialog, SIGNAL(detectionDone(bool)), SLOT(readWindowProperties(bool)) );
+            connect(m_detectDialog, &DetectDialog::detectionDone, this, &ExceptionDialog::readWindowProperties);
         }
 
-        m_detectDialog->detect(0);
+        m_detectDialog->detect();
 
     }
 
@@ -154,22 +142,19 @@ namespace SierraBreeze
         if( valid )
         {
 
-            // type
-            m_ui.exceptionType->setCurrentIndex( m_detectDialog->exceptionType() );
-
             // window info
-            const KWindowInfo& info( m_detectDialog->windowInfo() );
+            const QVariantMap properties = m_detectDialog->properties();
 
-            switch( m_detectDialog->exceptionType() )
+            switch( m_ui.exceptionType->currentIndex() )
             {
 
                 default:
                 case InternalSettings::ExceptionWindowClassName:
-                m_ui.exceptionEditor->setText( QString::fromUtf8( info.windowClassClass() ) );
+                m_ui.exceptionEditor->setText(properties.value(QStringLiteral("resourceClass")).toString());
                 break;
 
                 case InternalSettings::ExceptionWindowTitle:
-                m_ui.exceptionEditor->setText( info.name() );
+                m_ui.exceptionEditor->setText(properties.value(QStringLiteral("caption")).toString()); 
                 break;
 
             }
@@ -177,7 +162,7 @@ namespace SierraBreeze
         }
 
         delete m_detectDialog;
-        m_detectDialog = 0;
+        m_detectDialog = nullptr;
 
     }
 

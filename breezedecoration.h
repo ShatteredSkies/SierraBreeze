@@ -42,7 +42,6 @@ namespace KDecoration2
 
 namespace SierraBreeze
 {
-    class SizeGrip;
     class Decoration : public KDecoration2::Decoration
     {
         Q_OBJECT
@@ -103,7 +102,7 @@ namespace SierraBreeze
         //@}
 
         public Q_SLOTS:
-        void init() override;
+        bool init() override;
 
         private Q_SLOTS:
         void reconfigure();
@@ -139,21 +138,10 @@ namespace SierraBreeze
         inline int titleBarAlpha() const;
         //@}
 
-        //*@name size grip
-        //@{
-        void createSizeGrip( void );
-        void deleteSizeGrip( void );
-        SizeGrip* sizeGrip( void ) const
-        { return m_sizeGrip; }
-        //@}
-
         InternalSettingsPtr m_internalSettings;
         QList<KDecoration2::DecorationButton*> m_buttons;
         KDecoration2::DecorationButtonGroup *m_leftButtons = nullptr;
         KDecoration2::DecorationButtonGroup *m_rightButtons = nullptr;
-
-        //* size grip widget
-        SizeGrip *m_sizeGrip = nullptr;
 
         //* active state change animation
         QPropertyAnimation *m_animation;
@@ -189,28 +177,28 @@ namespace SierraBreeze
     }
 
     bool Decoration::isMaximized( void ) const
-    { return client().toStrongRef().data()->isMaximized() && !m_internalSettings->drawBorderOnMaximizedWindows(); }
+    { return client()->isMaximized() && !m_internalSettings->drawBorderOnMaximizedWindows(); }
 
     bool Decoration::isMaximizedHorizontally( void ) const
-    { return client().toStrongRef().data()->isMaximizedHorizontally() && !m_internalSettings->drawBorderOnMaximizedWindows(); }
+    { return client()->isMaximizedHorizontally() && !m_internalSettings->drawBorderOnMaximizedWindows(); }
 
     bool Decoration::isMaximizedVertically( void ) const
-    { return client().toStrongRef().data()->isMaximizedVertically() && !m_internalSettings->drawBorderOnMaximizedWindows(); }
+    { return client()->isMaximizedVertically() && !m_internalSettings->drawBorderOnMaximizedWindows(); }
 
     bool Decoration::isLeftEdge( void ) const
-    { return (client().toStrongRef().data()->isMaximizedHorizontally() || client().toStrongRef().data()->adjacentScreenEdges().testFlag( Qt::LeftEdge ) ) && !m_internalSettings->drawBorderOnMaximizedWindows(); }
+    { return (client()->isMaximizedHorizontally() || client()->adjacentScreenEdges().testFlag( Qt::LeftEdge ) ) && !m_internalSettings->drawBorderOnMaximizedWindows(); }
 
     bool Decoration::isRightEdge( void ) const
-    { return (client().toStrongRef().data()->isMaximizedHorizontally() || client().toStrongRef().data()->adjacentScreenEdges().testFlag( Qt::RightEdge ) ) && !m_internalSettings->drawBorderOnMaximizedWindows(); }
+    { return (client()->isMaximizedHorizontally() || client()->adjacentScreenEdges().testFlag( Qt::RightEdge ) ) && !m_internalSettings->drawBorderOnMaximizedWindows(); }
 
     bool Decoration::isTopEdge( void ) const
-    { return (client().toStrongRef().data()->isMaximizedVertically() || client().toStrongRef().data()->adjacentScreenEdges().testFlag( Qt::TopEdge ) ) && !m_internalSettings->drawBorderOnMaximizedWindows(); }
+    { return (client()->isMaximizedVertically() || client()->adjacentScreenEdges().testFlag( Qt::TopEdge ) ) && !m_internalSettings->drawBorderOnMaximizedWindows(); }
 
     bool Decoration::isBottomEdge( void ) const
-    { return (client().toStrongRef().data()->isMaximizedVertically() || client().toStrongRef().data()->adjacentScreenEdges().testFlag( Qt::BottomEdge ) ) && !m_internalSettings->drawBorderOnMaximizedWindows(); }
+    { return (client()->isMaximizedVertically() || client()->adjacentScreenEdges().testFlag( Qt::BottomEdge ) ) && !m_internalSettings->drawBorderOnMaximizedWindows(); }
 
     bool Decoration::hideTitleBar( void ) const
-    { return m_internalSettings->hideTitleBar() && !client().toStrongRef().data()->isShaded(); }
+    { return m_internalSettings->hideTitleBar() && !client()->isShaded(); }
 
     bool Decoration::matchColorForTitleBar( void ) const
     { return m_internalSettings->matchColorForTitleBar(); }

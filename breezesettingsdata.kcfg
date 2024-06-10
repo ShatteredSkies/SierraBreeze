@@ -143,6 +143,12 @@
        <default>199, 199, 199</default>
     </entry>
 
+    <entry name="CornerRadius" type = "Double">
+       <default>1.6</default>
+       <min>0</min>
+       <max>12</max>
+    </entry>
+
     <!-- maximized windows -->
     <entry name="DrawBorderOnMaximizedWindows" type = "Bool">
         <default>false</default>

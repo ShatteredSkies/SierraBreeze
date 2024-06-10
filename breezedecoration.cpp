@@ -22,11 +22,8 @@
 #include "breezedecoration.h"
 
 #include "breezesettingsprovider.h"
-#include "config-breeze.h"
-#include "config/breezeconfigwidget.h"
 
 #include "breezebutton.h"
-#include "breezesizegrip.h"
 
 #include <KDecoration2/DecorationButtonGroup>
 #include <KDecoration2/DecorationShadow>
@@ -40,15 +37,8 @@
 #include <QTextStream>
 #include <QTimer>
 
-#if BREEZE_HAVE_X11
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-#include <private/qtx11extras_p.h>
-#else
-#include <QX11Info>
-#endif
-#endif
-
 #include <cmath>
+#include <qnamespace.h>
 
 K_PLUGIN_FACTORY_WITH_JSON(
     // BreezeDecoFactory,
@@ -56,7 +46,7 @@ K_PLUGIN_FACTORY_WITH_JSON(
     "breeze.json",
     registerPlugin<SierraBreeze::Decoration>();
     registerPlugin<SierraBreeze::Button>();
-    registerPlugin<SierraBreeze::ConfigWidget>();
+    //registerPlugin<SierraBreeze::ConfigWidget>();
 )
 
 namespace SierraBreeze
@@ -70,7 +60,7 @@ namespace SierraBreeze
     static int g_shadowSize = 0;
     static int g_shadowStrength = 0;
     static QColor g_shadowColor = Qt::black;
-    static QSharedPointer<KDecoration2::DecorationShadow> g_sShadow;
+    static std::shared_ptr<KDecoration2::DecorationShadow> g_sShadow;
 
     //________________________________________________________________
     Decoration::Decoration(QObject *parent, const QVariantList &args)
@@ -86,10 +76,8 @@ namespace SierraBreeze
         g_sDecoCount--;
         if (g_sDecoCount == 0) {
             // last deco destroyed, clean up shadow
-            g_sShadow.clear();
+            g_sShadow.reset();
         }
-
-        deleteSizeGrip();
 
     }
 
@@ -99,15 +87,13 @@ namespace SierraBreeze
         if( m_opacity == value ) return;
         m_opacity = value;
         update();
-
-        if( m_sizeGrip ) m_sizeGrip->update();
     }
 
     //________________________________________________________________
     QColor Decoration::titleBarColor() const
     {
 
-        const auto c = client().toStrongRef();
+        const auto c = client();
         if( hideTitleBar() ) return c->color( ColorGroup::Inactive, ColorRole::TitleBar );
         else if( m_animation->state() == QAbstractAnimation::Running )
         {
@@ -123,7 +109,7 @@ namespace SierraBreeze
     QColor Decoration::outlineColor() const
     {
 
-        auto c( client().toStrongRef().data() );
+        auto c( client() );
         if( !m_internalSettings->drawTitleBarSeparator() ) return QColor();
         if( m_animation->state() == QPropertyAnimation::Running )
         {
@@ -138,7 +124,7 @@ namespace SierraBreeze
     QColor Decoration::fontColor() const
     {
 
-        auto c = client().toStrongRef().data();
+        auto c = client();
         if( m_animation->state() == QPropertyAnimation::Running )
         {
             return KColorUtils::mix(
@@ -151,9 +137,9 @@ namespace SierraBreeze
     }
 
     //________________________________________________________________
-    void Decoration::init()
+    bool Decoration::init()
     {
-        auto c = client().toStrongRef().data();
+        auto c = client();
 
         // active state change animation
         m_animation->setStartValue( 0 );
@@ -165,21 +151,21 @@ namespace SierraBreeze
         reconfigure();
         updateTitleBar();
         auto s = settings();
-        connect(s.data(), &KDecoration2::DecorationSettings::borderSizeChanged, this, &Decoration::recalculateBorders);
+        connect(s.get(), &KDecoration2::DecorationSettings::borderSizeChanged, this, &Decoration::recalculateBorders);
 
         // a change in font might cause the borders to change
-        connect(s.data(), &KDecoration2::DecorationSettings::fontChanged, this, &Decoration::recalculateBorders);
-        connect(s.data(), &KDecoration2::DecorationSettings::spacingChanged, this, &Decoration::recalculateBorders);
+        connect(s.get(), &KDecoration2::DecorationSettings::fontChanged, this, &Decoration::recalculateBorders);
+        connect(s.get(), &KDecoration2::DecorationSettings::spacingChanged, this, &Decoration::recalculateBorders);
 
         // buttons
-        connect(s.data(), &KDecoration2::DecorationSettings::spacingChanged, this, &Decoration::updateButtonsGeometryDelayed);
-        connect(s.data(), &KDecoration2::DecorationSettings::decorationButtonsLeftChanged, this, &Decoration::updateButtonsGeometryDelayed);
-        connect(s.data(), &KDecoration2::DecorationSettings::decorationButtonsRightChanged, this, &Decoration::updateButtonsGeometryDelayed);
+        connect(s.get(), &KDecoration2::DecorationSettings::spacingChanged, this, &Decoration::updateButtonsGeometryDelayed);
+        connect(s.get(), &KDecoration2::DecorationSettings::decorationButtonsLeftChanged, this, &Decoration::updateButtonsGeometryDelayed);
+        connect(s.get(), &KDecoration2::DecorationSettings::decorationButtonsRightChanged, this, &Decoration::updateButtonsGeometryDelayed);
 
         // full reconfiguration
-        connect(s.data(), &KDecoration2::DecorationSettings::reconfigured, this, &Decoration::reconfigure);
-        connect(s.data(), &KDecoration2::DecorationSettings::reconfigured, SettingsProvider::self(), &SettingsProvider::reconfigure, Qt::UniqueConnection );
-        connect(s.data(), &KDecoration2::DecorationSettings::reconfigured, this, &Decoration::updateButtonsGeometryDelayed);
+        connect(s.get(), &KDecoration2::DecorationSettings::reconfigured, this, &Decoration::reconfigure);
+        connect(s.get(), &KDecoration2::DecorationSettings::reconfigured, SettingsProvider::self(), &SettingsProvider::reconfigure, Qt::UniqueConnection );
+        connect(s.get(), &KDecoration2::DecorationSettings::reconfigured, this, &Decoration::updateButtonsGeometryDelayed);
 
         connect(c, &KDecoration2::DecoratedClient::adjacentScreenEdgesChanged, this, &Decoration::recalculateBorders);
         connect(c, &KDecoration2::DecoratedClient::maximizedHorizontallyChanged, this, &Decoration::recalculateBorders);
@@ -203,21 +189,23 @@ namespace SierraBreeze
         connect(c, &KDecoration2::DecoratedClient::adjacentScreenEdgesChanged, this, &Decoration::updateButtonsGeometry);
         connect(c, &KDecoration2::DecoratedClient::shadedChanged, this, &Decoration::updateButtonsGeometry);
 
-        connect(s.data(), &KDecoration2::DecorationSettings::borderSizeChanged, this, &Decoration::updateBlur);
-        connect(s.data(), &KDecoration2::DecorationSettings::fontChanged, this, &Decoration::updateBlur);
-        connect(s.data(), &KDecoration2::DecorationSettings::spacingChanged, this, &Decoration::updateBlur);
+        connect(s.get(), &KDecoration2::DecorationSettings::borderSizeChanged, this, &Decoration::updateBlur);
+        connect(s.get(), &KDecoration2::DecorationSettings::fontChanged, this, &Decoration::updateBlur);
+        connect(s.get(), &KDecoration2::DecorationSettings::spacingChanged, this, &Decoration::updateBlur);
         connect(c, &KDecoration2::DecoratedClient::activeChanged, this, &Decoration::updateBlur);
         connect(c, &KDecoration2::DecoratedClient::sizeChanged, this, &Decoration::updateBlur);
 
         createButtons();
         createShadow();
+
+        return true;
     }
 
     //________________________________________________________________
     void Decoration::updateTitleBar()
     {
-        auto s = settings();
-        auto c = client().toStrongRef().data();
+        const auto s = settings();
+        const auto c = client();
         const bool maximized = isMaximized();
         const int width =  maximized ? c->width() : c->width() - 2*s->largeSpacing()*Metrics::TitleBar_SideMargin;
         const int height = maximized ? borderTop() : borderTop() - s->smallSpacing()*Metrics::TitleBar_TopMargin;
@@ -232,7 +220,7 @@ namespace SierraBreeze
         if( m_internalSettings->animationsEnabled() )
         {
 
-            auto c = client().toStrongRef().data();
+            const auto c = client();
             m_animation->setDirection( c->isActive() ? QPropertyAnimation::Forward : QPropertyAnimation::Backward );
             if( m_animation->state() != QPropertyAnimation::Running ) m_animation->start();
 
@@ -246,9 +234,9 @@ namespace SierraBreeze
     //________________________________________________________________
     void Decoration::updateSizeGripVisibility()
     {
-        auto c = client().toStrongRef().data();
+        /*auto c = client();
         if( m_sizeGrip )
-        { m_sizeGrip->setVisible( c->isResizeable() && !isMaximized() && !c->isShaded() ); }
+        { m_sizeGrip->setVisible( c->isResizeable() && !isMaximized() && !c->isShaded() ); }*/
     }
 
     //________________________________________________________________
@@ -308,16 +296,12 @@ namespace SierraBreeze
 
         // shadow
         createShadow();
-
-        // size grip
-        if( hasNoBorders() && m_internalSettings->drawSizeGrip() ) createSizeGrip();
-        else deleteSizeGrip();
     }
 
     //________________________________________________________________
     void Decoration::recalculateBorders()
     {
-        auto c = client().toStrongRef().data();
+        auto c = client();
         auto s = settings();
 
         // left, right and bottom borders
@@ -375,7 +359,7 @@ namespace SierraBreeze
         }
 
         QRegion region;
-        const auto c = client().toStrongRef();
+        const auto c = client();
         QSize rSize(m_scaledCornerRadius, m_scaledCornerRadius);
 
         if (!c->isShaded() && !isMaximized() && !hasNoBorders())
@@ -501,7 +485,8 @@ void Decoration::createButtons()
 
     //________________________________________________________________
     void Decoration::updateButtonsGeometryDelayed()
-    { QTimer::singleShot( 0, this, &Decoration::updateButtonsGeometry ); }
+    { using namespace std::chrono_literals;
+        QTimer::singleShot( 0ms, this, &Decoration::updateButtonsGeometry ); }
 
     //________________________________________________________________
     void Decoration::updateButtonsGeometry()
@@ -536,7 +521,7 @@ void Decoration::createButtons()
             if( isLeftEdge() )
             {
                 // add offsets on the side buttons, to preserve padding, but satisfy Fitts law
-                auto button = static_cast<Button*>( m_leftButtons->buttons().front().data() );
+                auto button = static_cast<Button*>( m_leftButtons->buttons().front() );
                 button->setGeometry( QRectF( QPoint( 0, 0 ), QSizeF( bWidth + hPadding, bHeight ) ) );
                 button->setFlag( Button::FlagFirstInList );
                 button->setHorizontalOffset( hPadding );
@@ -562,7 +547,7 @@ void Decoration::createButtons()
             if( isRightEdge() )
             {
 
-                auto button = static_cast<Button*>( m_rightButtons->buttons().back().data() );
+                auto button = static_cast<Button*>( m_rightButtons->buttons().back() );
                 button->setGeometry( QRectF( QPoint( 0, 0 ), QSizeF( bWidth + hPadding, bHeight ) ) );
                 button->setFlag( Button::FlagLastInList );
 
@@ -580,7 +565,7 @@ void Decoration::createButtons()
     void Decoration::paint(QPainter *painter, const QRect &repaintRegion)
     {
         // TODO: optimize based on repaintRegion
-        auto c = client().toStrongRef().data();
+        auto c = client();
         auto s = settings();
 
         // paint background
@@ -624,7 +609,7 @@ void Decoration::createButtons()
     //________________________________________________________________
     void Decoration::paintTitleBar(QPainter *painter, const QRect &repaintRegion)
     {
-        const auto c = client().toStrongRef().data();
+        const auto c = client();
         // TODO Review this. Here the window color is appended in matchedTitleBarColor var
         const QColor matchedTitleBarColor(c->palette().color(QPalette::Window));
         const QRect titleRect(QPoint(0, 0), QSize(size().width(), borderTop()));
@@ -726,7 +711,7 @@ void Decoration::createButtons()
         if( hideTitleBar() ) return qMakePair( QRect(), Qt::AlignCenter );
         else {
 
-            auto c = client().toStrongRef().data();
+            auto c = client();
             const int leftOffset = m_leftButtons->buttons().isEmpty() ?
                 Metrics::TitleBar_SideMargin*settings()->smallSpacing():
                 m_leftButtons->geometry().x() + m_leftButtons->geometry().width() + Metrics::TitleBar_SideMargin*settings()->smallSpacing();
@@ -842,7 +827,7 @@ void Decoration::createButtons()
 
             painter.end();
 
-            g_sShadow = QSharedPointer<KDecoration2::DecorationShadow>::create();
+            g_sShadow = std::make_shared<KDecoration2::DecorationShadow>();
             g_sShadow->setPadding( QMargins(
                 // g_shadowSize - shadowOffset - Metrics::Shadow_Overlap,
                 g_shadowSize - Metrics::Shadow_Overlap,
@@ -861,44 +846,9 @@ void Decoration::createButtons()
 
     }
 
-    //_________________________________________________________________
-    void Decoration::createSizeGrip( void )
-    {
-
-        // do nothing if size grip already exist
-        if( m_sizeGrip ) return;
-
-        #if BREEZE_HAVE_X11
-        if( !QX11Info::isPlatformX11() ) return;
-
-        // access client
-        auto c = client().toStrongRef().data();
-        if( !c ) return;
-
-        if( c->windowId() != 0 )
-        {
-            m_sizeGrip = new SizeGrip( this );
-            connect( c, &KDecoration2::DecoratedClient::maximizedChanged, this, &Decoration::updateSizeGripVisibility );
-            connect( c, &KDecoration2::DecoratedClient::shadedChanged, this, &Decoration::updateSizeGripVisibility );
-            connect( c, &KDecoration2::DecoratedClient::resizeableChanged, this, &Decoration::updateSizeGripVisibility );
-        }
-        #endif
-
-    }
-
-    //_________________________________________________________________
-    void Decoration::deleteSizeGrip( void )
-    {
-        if( m_sizeGrip )
-        {
-            m_sizeGrip->deleteLater();
-            m_sizeGrip = nullptr;
-        }
-    }
-
     void Decoration::setScaledCornerRadius()
     {
-        m_scaledCornerRadius = Metrics::Frame_FrameRadius*settings()->smallSpacing();
+        m_scaledCornerRadius = m_internalSettings->cornerRadius() * settings()->smallSpacing();
 
     }
 

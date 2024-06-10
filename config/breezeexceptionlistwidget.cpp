@@ -31,6 +31,7 @@
 #include <QMessageBox>
 #include <QPointer>
 #include <QIcon>
+#include <qregularexpression.h>
 
 //__________________________________________________________
 namespace SierraBreeze
@@ -333,7 +334,7 @@ namespace SierraBreeze
     bool ExceptionListWidget::checkException( InternalSettingsPtr exception )
     {
 
-        while( exception->exceptionPattern().isEmpty() || !QRegExp( exception->exceptionPattern() ).isValid() )
+        while( exception->exceptionPattern().isEmpty() || !QRegularExpression( exception->exceptionPattern() ).isValid() )
         {
 
             QMessageBox::warning( this, i18n( "Warning - Breeze Settings" ), i18n("Regular Expression syntax is incorrect") );

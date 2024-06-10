@@ -23,6 +23,6 @@
 #define config_breeze_h
 
 /* Define to 1 if XCB libraries are found */
-#cmakedefine01 BREEZE_HAVE_X11
+#define BREEZE_HAVE_X11 0
 
 #endif

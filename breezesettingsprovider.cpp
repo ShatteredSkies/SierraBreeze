@@ -26,6 +26,8 @@
 
 #include <QTextStream>
 
+#include <qregularexpression.h>
+
 namespace SierraBreeze
 {
 
@@ -75,7 +77,7 @@ namespace SierraBreeze
         QString className;
 
         // get the client
-        auto client = decoration->client().toStrongRef().data();
+        auto client = decoration->client();
 
         foreach( auto internalSettings, m_exceptions )
         {
@@ -118,7 +120,7 @@ namespace SierraBreeze
             }
 
             // check matching
-            if( QRegExp( internalSettings->exceptionPattern() ).indexIn( value ) >= 0 )
+            if ( QRegularExpression( internalSettings->exceptionPattern() ).match( value ).hasMatch() )
             { return internalSettings; }
 
         }
