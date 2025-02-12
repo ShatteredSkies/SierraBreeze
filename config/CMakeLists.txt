@@ -24,7 +24,7 @@ kcoreaddons_add_plugin(kcm_sierrabreezedecoration
     kcm_sierrabreezedecoration.cpp
     ${sierrabreeze_config_SRCS}
     ${sierrabreeze_config_PART_FORMS_HEADERS}
-    INSTALL_NAMESPACE "org.kde.kdecoration2.kcm")
+    INSTALL_NAMESPACE "org.kde.kdecoration3.kcm")
 
 kconfig_add_kcfg_files(kcm_sierrabreezedecoration ../breezesettings.kcfgc)
 target_include_directories(kcm_sierrabreezedecoration PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})

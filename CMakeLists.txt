@@ -28,11 +28,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-set(KF6_MIN_VERSION "5.27.0")
-set(KDECORATION2_MIN_VERSION "5.27.80")
-
-find_package(KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS CoreAddons GuiAddons ConfigWidgets WindowSystem I18n KCMUtils)
-find_package(KDecoration2 ${KDECORATION2_MIN_VERSION} REQUIRED)
+find_package(KF6 REQUIRED COMPONENTS CoreAddons GuiAddons ConfigWidgets WindowSystem I18n KCMUtils)
+find_package(KDecoration3 REQUIRED)
 
 set(sierrabreeze_SRCS
     breezebutton.cpp
@@ -53,7 +50,7 @@ target_link_libraries(sierrabreeze
         Qt6::Gui
         Qt6::DBus
     PRIVATE
-        KDecoration2::KDecoration
+        KDecoration3::KDecoration
         KF6::ConfigCore
         KF6::CoreAddons
         KF6::ConfigWidgets

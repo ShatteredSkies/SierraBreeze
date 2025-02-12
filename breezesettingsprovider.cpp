@@ -22,8 +22,6 @@
 
 #include "breezeexceptionlist.h"
 
-#include <KWindowInfo>
-
 #include <QTextStream>
 
 #include <qregularexpression.h>
@@ -77,7 +75,7 @@ namespace SierraBreeze
         QString className;
 
         // get the client
-        auto client = decoration->client();
+        auto client = decoration->window();
 
         foreach( auto internalSettings, m_exceptions )
         {
@@ -89,38 +87,29 @@ namespace SierraBreeze
             if( internalSettings->exceptionPattern().isEmpty() ) continue;
 
             /*
-            decide which value is to be compared
+            decide which windowPropertyValue is to be compared
             to the regular expression, based on exception type
             */
-            QString value;
+            QString windowPropertyValue;
             switch( internalSettings->exceptionType() )
             {
                 case InternalSettings::ExceptionWindowTitle:
                 {
-                    value = windowTitle.isEmpty() ? (windowTitle = client->caption()):windowTitle;
+                    windowPropertyValue = windowTitle.isEmpty() ? (windowTitle = client->caption()):windowTitle;
                     break;
                 }
 
                 default:
                 case InternalSettings::ExceptionWindowClassName:
                 {
-                    if( className.isEmpty() )
-                    {
-                        // retrieve class name
-                        KWindowInfo info( client->windowId(), {}, NET::WM2WindowClass );
-                        QString window_className( QString::fromUtf8(info.windowClassName()) );
-                        QString window_class( QString::fromUtf8(info.windowClassClass()) );
-                        className = window_className + QStringLiteral(" ") + window_class;
-                    }
-
-                    value = className;
+                    windowPropertyValue = client->windowClass(); // windowClass() available from KDecoration 5.27 onwards
                     break;
                 }
 
             }
 
             // check matching
-            if ( QRegularExpression( internalSettings->exceptionPattern() ).match( value ).hasMatch() )
+            if ( QRegularExpression( internalSettings->exceptionPattern() ).match( windowPropertyValue ).hasMatch() )
             { return internalSettings; }
 
         }

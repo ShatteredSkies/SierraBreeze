@@ -25,16 +25,16 @@
 #include "breeze.h"
 #include "breezesettings.h"
 
-#include <KDecoration2/Decoration>
-#include <KDecoration2/DecoratedClient>
-#include <KDecoration2/DecorationSettings>
+#include <KDecoration3/Decoration>
+#include <KDecoration3/DecoratedWindow>
+#include <KDecoration3/DecorationSettings>
 
 #include <QPalette>
 #include <QPropertyAnimation>
 #include <QVariant>
 #include <QPainter>
 
-namespace KDecoration2
+namespace KDecoration3
 {
     class DecorationButton;
     class DecorationButtonGroup;
@@ -42,7 +42,7 @@ namespace KDecoration2
 
 namespace SierraBreeze
 {
-    class Decoration : public KDecoration2::Decoration
+    class Decoration : public KDecoration3::Decoration
     {
         Q_OBJECT
 
@@ -58,7 +58,7 @@ namespace SierraBreeze
         virtual ~Decoration();
 
         //* paint
-        void paint(QPainter *painter, const QRect &repaintRegion) override;
+        void paint(QPainter *painter, const QRectF &repaintRegion) override;
 
         //* internal settings
         InternalSettingsPtr internalSettings() const
@@ -111,7 +111,6 @@ namespace SierraBreeze
         void updateButtonsGeometryDelayed();
         void updateTitleBar();
         void updateAnimationState();
-        void updateSizeGripVisibility();
         void updateBlur();
 
         private:
@@ -120,7 +119,7 @@ namespace SierraBreeze
         QPair<QRect,Qt::Alignment> captionRect( void ) const;
 
         void createButtons();
-        void paintTitleBar(QPainter *painter, const QRect &repaintRegion);
+        void paintTitleBar(QPainter *painter, const QRectF &repaintRegion);
         void createShadow();
 
         void setScaledCornerRadius();
@@ -133,15 +132,17 @@ namespace SierraBreeze
         inline bool hasNoSideBorders( void ) const;
         //@}
 
+        void setScaledTitleBarSideMargins();
+
         //*@name color customization
         //@{
         inline int titleBarAlpha() const;
         //@}
 
         InternalSettingsPtr m_internalSettings;
-        QList<KDecoration2::DecorationButton*> m_buttons;
-        KDecoration2::DecorationButtonGroup *m_leftButtons = nullptr;
-        KDecoration2::DecorationButtonGroup *m_rightButtons = nullptr;
+        QList<KDecoration3::DecorationButton*> m_buttons;
+        KDecoration3::DecorationButtonGroup *m_leftButtons = nullptr;
+        KDecoration3::DecorationButtonGroup *m_rightButtons = nullptr;
 
         //* active state change animation
         QPropertyAnimation *m_animation;
@@ -151,54 +152,58 @@ namespace SierraBreeze
 
         //*frame corner radius, scaled according to DPI
         qreal m_scaledCornerRadius = 3;
+        
+        //* titleBar side margins, scaled according to smallspacing
+        int m_scaledTitleBarLeftMargin = 1;
+        int m_scaledTitleBarRightMargin = 1;
 
         //TODO Review this
         QPainter painter;
-        const QRect repaintRegion;
+        const QRectF repaintRegion;
 
     };
 
     bool Decoration::hasBorders( void ) const
     {
         if( m_internalSettings && m_internalSettings->mask() & BorderSize ) return m_internalSettings->borderSize() > InternalSettings::BorderNoSides;
-        else return settings()->borderSize() > KDecoration2::BorderSize::NoSides;
+        else return settings()->borderSize() > KDecoration3::BorderSize::NoSides;
     }
 
     bool Decoration::hasNoBorders( void ) const
     {
         if( m_internalSettings && m_internalSettings->mask() & BorderSize ) return m_internalSettings->borderSize() == InternalSettings::BorderNone;
-        else return settings()->borderSize() == KDecoration2::BorderSize::None;
+        else return settings()->borderSize() == KDecoration3::BorderSize::None;
     }
 
     bool Decoration::hasNoSideBorders( void ) const
     {
         if( m_internalSettings && m_internalSettings->mask() & BorderSize ) return m_internalSettings->borderSize() == InternalSettings::BorderNoSides;
-        else return settings()->borderSize() == KDecoration2::BorderSize::NoSides;
+        else return settings()->borderSize() == KDecoration3::BorderSize::NoSides;
     }
 
     bool Decoration::isMaximized( void ) const
-    { return client()->isMaximized() && !m_internalSettings->drawBorderOnMaximizedWindows(); }
+    { return window()->isMaximized() && !m_internalSettings->drawBorderOnMaximizedWindows(); }
 
     bool Decoration::isMaximizedHorizontally( void ) const
-    { return client()->isMaximizedHorizontally() && !m_internalSettings->drawBorderOnMaximizedWindows(); }
+    { return window()->isMaximizedHorizontally() && !m_internalSettings->drawBorderOnMaximizedWindows(); }
 
     bool Decoration::isMaximizedVertically( void ) const
-    { return client()->isMaximizedVertically() && !m_internalSettings->drawBorderOnMaximizedWindows(); }
+    { return window()->isMaximizedVertically() && !m_internalSettings->drawBorderOnMaximizedWindows(); }
 
     bool Decoration::isLeftEdge( void ) const
-    { return (client()->isMaximizedHorizontally() || client()->adjacentScreenEdges().testFlag( Qt::LeftEdge ) ) && !m_internalSettings->drawBorderOnMaximizedWindows(); }
+    { return (window()->isMaximizedHorizontally() || window()->adjacentScreenEdges().testFlag( Qt::LeftEdge ) ) && !m_internalSettings->drawBorderOnMaximizedWindows(); }
 
     bool Decoration::isRightEdge( void ) const
-    { return (client()->isMaximizedHorizontally() || client()->adjacentScreenEdges().testFlag( Qt::RightEdge ) ) && !m_internalSettings->drawBorderOnMaximizedWindows(); }
+    { return (window()->isMaximizedHorizontally() || window()->adjacentScreenEdges().testFlag( Qt::RightEdge ) ) && !m_internalSettings->drawBorderOnMaximizedWindows(); }
 
     bool Decoration::isTopEdge( void ) const
-    { return (client()->isMaximizedVertically() || client()->adjacentScreenEdges().testFlag( Qt::TopEdge ) ) && !m_internalSettings->drawBorderOnMaximizedWindows(); }
+    { return (window()->isMaximizedVertically() || window()->adjacentScreenEdges().testFlag( Qt::TopEdge ) ) && !m_internalSettings->drawBorderOnMaximizedWindows(); }
 
     bool Decoration::isBottomEdge( void ) const
-    { return (client()->isMaximizedVertically() || client()->adjacentScreenEdges().testFlag( Qt::BottomEdge ) ) && !m_internalSettings->drawBorderOnMaximizedWindows(); }
+    { return (window()->isMaximizedVertically() || window()->adjacentScreenEdges().testFlag( Qt::BottomEdge ) ) && !m_internalSettings->drawBorderOnMaximizedWindows(); }
 
     bool Decoration::hideTitleBar( void ) const
-    { return m_internalSettings->hideTitleBar() && !client()->isShaded(); }
+    { return m_internalSettings->hideTitleBar() && !window()->isShaded(); }
 
     bool Decoration::matchColorForTitleBar( void ) const
     { return m_internalSettings->matchColorForTitleBar(); }
